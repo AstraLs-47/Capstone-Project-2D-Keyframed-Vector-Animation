@@ -23,21 +23,6 @@ The primary objective of the project is to demonstrate the application of comput
 - **Window Management:** GLUT
 - **Development Environment:** Python 3.x
 
-## Project Structure
-
-```
-
-project/
-│── main.py
-│── character.py
-│── animation.py
-│── transformations.py
-│── utils.py
-└── README.md
-
-````
-
-> *The project structure may vary depending on implementation.*
 
 ## Learning Objectives
 
