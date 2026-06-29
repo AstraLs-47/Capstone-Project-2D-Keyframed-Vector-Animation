@@ -1,23 +1,3 @@
-"""
-keyframes.py
-------------
-Named key poses. Angles in degrees.
-
-Convention (pygame y-down coordinate system):
-  0   = limb hanging straight DOWN
-  +   = clockwise rotation
-  -   = counter-clockwise rotation
-
-Shield arm (left) angle guide:
-  left_shoulder:  30-40  ->  arm swings outward/forward from body
-  left_elbow:     80-100 ->  forearm folds back, shield beside chest
-  Increasing left_elbow raises shield; 100+ starts covering face -> avoid.
-
-Spear arm (right) angle guide:
-  right_shoulder: 0      -> hangs straight down
-  right_shoulder: -160+  -> arm raised overhead
-  right_shoulder: -150   -> arm thrusts FORWARD (spear leads)
-"""
 
 CHANNELS = [
     "world_lean", "torso_rot", "neck",
@@ -35,12 +15,10 @@ def pose(base=None, **overrides):
     d.update(overrides)
     return d
 
-
-# ---------------------------------------------------------------------------
 # BASE GUARD STANCE
 # Matches image: symmetrical upright stance, shield on left side at chest
 # level, spear held vertically on right side.
-# ---------------------------------------------------------------------------
+
 IDLE_GUARD = pose(
     world_lean=0,
     # Shield arm (left): upper arm angled outward ~30°, elbow ~85°
@@ -60,21 +38,17 @@ IDLE_GUARD = pose(
 
 
 POSES = {
-    # ==================================================================
+
     # SCENE 1: Introduction / Idle
-    # ==================================================================
+    
     "idle_guard":       IDLE_GUARD,
     "idle_inhale":      pose(IDLE_GUARD, torso_rot=-2, neck=-1),
     "idle_exhale":      pose(IDLE_GUARD, torso_rot=2,  neck=1),
     "head_scan_right":  pose(IDLE_GUARD, neck=20, torso_rot=4),
     "head_scan_left":   pose(IDLE_GUARD, neck=-20, torso_rot=-4),
 
-    # ==================================================================
     # SCENE 2: Walk cycle — 8 keyframes (contact/down/pass/up x 2)
-    # Opposite arm/leg: when left leg forward, right arm forward.
-    # Shield arm (left) stays in guard; spear arm (right) swings.
-    # ==================================================================
-
+    
     # --- LEFT foot contact (left leg extends forward) ---
     "walk_contact_l":  pose(IDLE_GUARD,
                              world_lean=2,
@@ -141,11 +115,10 @@ POSES = {
                              left_shoulder=32,  left_elbow=90,
                              right_shoulder=-5, right_elbow=10, right_wrist=0),
 
-    # ==================================================================
+    
     # SCENE 2: Run cycle — 8 keyframes
     # Forward torso lean, larger limb extension, shield stays stable
-    # ==================================================================
-
+    
     "run_contact_l":   pose(IDLE_GUARD,
                              world_lean=8,
                              left_hip=-20,  left_knee=10,  left_ankle=5,
@@ -210,13 +183,12 @@ POSES = {
                              right_shoulder=-10, right_elbow=15, right_wrist=0,
                              torso_rot=4),
 
-    # ==================================================================
+    
     # SCENE 3: ATTACK — Spear Thrust  (5 storyboard keyframes)
     # The spear moves ONLY FORWARD in a straight thrust.
     # Shield stays at the left side the entire time.
     # Feet stay grounded.  Arms remain connected to shoulders.
-    # ==================================================================
-
+    
     # Pose 1 — READY: neutral, spear upright at right side, weight centred
     "atk_ready": pose(IDLE_GUARD,
                       right_shoulder=-25, right_elbow=75, right_wrist=-10),
@@ -255,12 +227,11 @@ POSES = {
                          right_shoulder=0, right_elbow=60, right_wrist=-10,
                          left_shoulder=30, left_elbow=88),
 
-    # ==================================================================
+    
     # SCENE 4: DEFENSE — Shield Block  (5 storyboard keyframes)
     # Shield protects torso + upper abdomen, NEVER covers the face.
     # Spear stays in ready position.  Only shoulder and elbow rotate.
     # Arms remain connected.  Smooth in/out transitions.
-    # ==================================================================
 
     # Pose 1 — READY: shield beside left torso, spear neutral, weight centred
     "def_ready": pose(IDLE_GUARD),
@@ -293,9 +264,9 @@ POSES = {
                       right_shoulder=5, right_elbow=10,
                       torso_rot=-2),
 
-    # ==================================================================
+   
     # SCENE 5: Kept for compatibility (guard stances)
-    # ==================================================================
+   
     "guard_stop":        pose(IDLE_GUARD),
     "raise_shield_mid":  pose(IDLE_GUARD,
                                left_shoulder=32, left_elbow=95,
@@ -315,10 +286,9 @@ POSES = {
                                world_lean=4,  left_hip=14, right_hip=-10, torso_rot=4),
 
 
-    # ==================================================================
     # SCENE 6: Victory
     # Spear raised overhead, shield held at waist/side (NOT covering face)
-    # ==================================================================
+   
     "victory_raise_arm":  pose(IDLE_GUARD,
                                 right_shoulder=-170, right_elbow=12, right_wrist=180,
                                 left_shoulder=35, left_elbow=88,
@@ -340,24 +310,21 @@ POSES = {
                                 left_shoulder=35,    left_elbow=85,
                                 torso_rot=-8, world_lean=-4),
 
-    # ==================================================================
     # SCENE 7: Ending / Ceremonial
-    # ==================================================================
+
     "final_pose":       pose(IDLE_GUARD, torso_rot=-2),
     "ceremonial_guard": IDLE_GUARD,
 
-    # ==================================================================
     # TURN AROUND
-    # ==================================================================
+
     "turn_start": pose(IDLE_GUARD, torso_rot=8,  neck=12, world_lean=2),
     "turn_mid":   pose(IDLE_GUARD, torso_rot=20, neck=25, world_lean=4,
                        left_shoulder=22, left_elbow=80,
                        right_shoulder=8, right_elbow=18),
     "turn_end":   pose(IDLE_GUARD, torso_rot=0,  neck=0,  world_lean=-2),
 
-    # ==================================================================
     # WALK BACK — leg angles reduced to stay inside dress
-    # ==================================================================
+  
     "walk_back_contact_l": pose(IDLE_GUARD, world_lean=-3,
                                  left_hip=-15, left_knee=5,   left_ankle=5,
                                  right_hip=15, right_knee=20, right_ankle=-8,
@@ -399,9 +366,8 @@ POSES = {
                                  left_shoulder=30, left_elbow=88,
                                  right_shoulder=-8, right_elbow=10),
 
-    # ==================================================================
     # VICTORY / TAUNT
-    # ==================================================================
+   
     "victory_raise_arm": pose(IDLE_GUARD,
                                right_shoulder=-170, right_elbow=12, right_wrist=180,
                                left_shoulder=30, left_elbow=85,
@@ -419,9 +385,9 @@ POSES = {
                                left_shoulder=30, left_elbow=85,
                                torso_rot=-8, world_lean=-4),
 
-    # ==================================================================
+    
     # READY / RESET and BREATH LOOP
-    # ==================================================================
+    
     "ready_reset":   pose(IDLE_GUARD, torso_rot=-2, neck=-2),
     "breath_inhale": pose(IDLE_GUARD, torso_rot=-3, neck=-1, world_lean=1),
     "breath_exhale": pose(IDLE_GUARD, torso_rot=2,  neck=1,  world_lean=-1),
