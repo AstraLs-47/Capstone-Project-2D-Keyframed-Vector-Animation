@@ -5,6 +5,7 @@ and object transformations.
 """
 
 import math
+import pygame
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
@@ -47,6 +48,14 @@ class ViewportManager:
         self.draw_h = logical_h
         self.mode = ProjectionMode.ORTHOGRAPHIC
 
+    def _has_gl_context(self):
+        """Return True when an OpenGL-capable display surface is active."""
+        try:
+            surface = pygame.display.get_surface()
+        except Exception:
+            return False
+        return surface is not None and bool(surface.get_flags() & pygame.OPENGL)
+
     def on_resize(self, win_w, win_h):
         """Update viewport rect and projection for a new window size."""
         self.win_w = max(64, int(win_w))
@@ -66,7 +75,8 @@ class ViewportManager:
             self.dx = 0
             self.dy = (self.win_h - self.draw_h) // 2
 
-        glViewport(self.dx, self.dy, self.draw_w, self.draw_h)
+        if self._has_gl_context():
+            glViewport(self.dx, self.dy, self.draw_w, self.draw_h)
         self.apply_projection()
 
     def toggle_projection(self):
@@ -79,6 +89,9 @@ class ViewportManager:
 
     def apply_projection(self):
         """Build the projection matrix for the current mode and aspect ratio."""
+        if not self._has_gl_context():
+            return
+
         aspect = self.draw_w / max(1, self.draw_h)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()

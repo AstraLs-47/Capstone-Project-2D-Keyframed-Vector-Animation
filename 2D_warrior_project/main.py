@@ -13,16 +13,55 @@ from graphics_pipeline import ViewportManager, Camera, AffineTransform
 LOGICAL_WIDTH, LOGICAL_HEIGHT = 1060, 560  # extra 200px for side panel
 INITIAL_WIN_W, INITIAL_WIN_H = 1280, 720
 FPS = 60
+RESIZE_HANDLE_W = 24
+RESIZE_HANDLE_H = 24
+
+
+def create_gl_window(size):
+    """Create a resizable OpenGL window and return the display surface."""
+    return pygame.display.set_mode(
+        size,
+        pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE,
+    )
+
+
+def is_over_resize_handle(screen_pos, viewport):
+    """Return True when the pointer is over the visible resize handle."""
+    if screen_pos is None:
+        return False
+
+    mouse_x, mouse_y = screen_pos
+    if mouse_x < viewport.dx or mouse_x > viewport.dx + viewport.draw_w:
+        return False
+    if mouse_y < viewport.dy or mouse_y > viewport.dy + viewport.draw_h:
+        return False
+
+    logical_x = (mouse_x - viewport.dx) * (LOGICAL_WIDTH / max(1, viewport.draw_w))
+    logical_y = (mouse_y - viewport.dy) * (LOGICAL_HEIGHT / max(1, viewport.draw_h))
+    handle_x = LOGICAL_WIDTH - 36
+    handle_y = LOGICAL_HEIGHT - 36
+    return (
+        handle_x <= logical_x <= handle_x + RESIZE_HANDLE_W
+        and handle_y <= logical_y <= handle_y + RESIZE_HANDLE_H
+    )
+
+
+def draw_resize_handle(surface):
+    """Draw a visible resize handle in the bottom-right corner of the scene."""
+    x = LOGICAL_WIDTH - 36
+    y = LOGICAL_HEIGHT - 36
+    rect = pygame.Rect(x, y, RESIZE_HANDLE_W, RESIZE_HANDLE_H)
+    pygame.draw.rect(surface, (40, 40, 40), rect)
+    pygame.draw.rect(surface, (220, 220, 220), rect, 1)
+    pygame.draw.line(surface, (220, 220, 220), (x + 6, y + 18), (x + 18, y + 6), 2)
+    pygame.draw.line(surface, (220, 220, 220), (x + 10, y + 18), (x + 18, y + 10), 2)
 
 
 def main():
     pygame.init()
 
     pygame.display.gl_set_attribute(pygame.GL_DOUBLEBUFFER, 1)
-    screen = pygame.display.set_mode(
-        (INITIAL_WIN_W, INITIAL_WIN_H),
-        pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE,
-    )
+    screen = create_gl_window((INITIAL_WIN_W, INITIAL_WIN_H))
     pygame.display.set_caption("Ethiopian Warrior - 2D Hierarchical Keyframe Animation")
     clock = pygame.time.Clock()
 
@@ -41,6 +80,9 @@ def main():
     showcase_on = False
     showcase_step = 0
     showcase_timer = 0.0
+    resize_dragging = False
+    resize_start_mouse = None
+    resize_start_size = None
 
     tex_id = glGenTextures(1)
     glEnable(GL_TEXTURE_2D)
@@ -55,20 +97,38 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.VIDEORESIZE:
-                # Recreate GL surface and update viewport + projection for new aspect ratio
-                screen = pygame.display.set_mode(
-                    (event.w, event.h),
-                    pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE,
-                )
-                viewport.on_resize(event.w, event.h)
+                # Recreate the GL surface and recalculate the viewport for the new aspect ratio.
+                win_w = max(1, int(event.w))
+                win_h = max(1, int(event.h))
+                screen = create_gl_window((win_w, win_h))
+                viewport.on_resize(win_w, win_h)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    camera.on_mouse_down(event.pos)
+                    if is_over_resize_handle(event.pos, viewport):
+                        resize_dragging = True
+                        resize_start_mouse = event.pos
+                        resize_start_size = screen.get_size()
+                    else:
+                        camera.on_mouse_down(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
-                    camera.on_mouse_up()
+                    if resize_dragging:
+                        resize_dragging = False
+                        resize_start_mouse = None
+                        resize_start_size = None
+                    else:
+                        camera.on_mouse_up()
             elif event.type == pygame.MOUSEMOTION:
-                camera.on_mouse_motion(event.pos)
+                if resize_dragging and resize_start_mouse is not None and resize_start_size is not None:
+                    dx = event.pos[0] - resize_start_mouse[0]
+                    dy = event.pos[1] - resize_start_mouse[1]
+                    new_w = max(640, int(resize_start_size[0] + dx))
+                    new_h = max(480, int(resize_start_size[1] + dy))
+                    if (new_w, new_h) != screen.get_size():
+                        screen = create_gl_window((new_w, new_h))
+                        viewport.on_resize(new_w, new_h)
+                else:
+                    camera.on_mouse_motion(event.pos)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
@@ -151,6 +211,7 @@ def main():
             cam_zoom=camera.zoom,
             obj_scale=affine.scale,
         )
+        draw_resize_handle(offscreen)
 
         if showcase_on:
             renderer.draw_showcase_overlay(offscreen, font, small_font, showcase_step, showcase_timer)
